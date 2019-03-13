@@ -1,0 +1,14 @@
+{
+  "name": "kuuga",
+  "version": "0.0.0",
+  "private": true,
+  "author": "Jrain Lau",
+  "main": "app.js",
+  "dependencies": {
+    "electron-store": "^2.0.0"
+  },
+  "devDependencies": {
+    "electron": "^4.0.1",
+    "electron-packager": "^13.0.1"
+  }
+}

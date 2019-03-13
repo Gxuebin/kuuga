@@ -3,16 +3,8 @@ const { resolve } = require('path')
 const fs = require('fs')
 const png2icons = require('png2icons')
 const pack = require('./pack')
-const { versionDiff } = require('./autoUpdate')
 
 let window = null
-
-async function runAutoUpdate () {
-  const result = await versionDiff()
-  console.log(result)
-}
-
-runAutoUpdate()
 
 function ipcMessager (window) {
   ipcMain.on('relaunch', () => {
