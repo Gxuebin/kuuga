@@ -3,18 +3,22 @@ const { resolve } = require('path')
 const fs = require('fs')
 const png2icons = require('png2icons')
 const pack = require('./pack')
-const { versionDiff } = require('./autoUpdate')
+const { versionDiff, autoUpdate } = require('./autoUpdate')
 
 let window = null
 
-async function runAutoUpdate () {
-  const result = await versionDiff()
-  console.log(result)
-}
-
-runAutoUpdate()
-
 function ipcMessager (window) {
+  ipcMain.on('check-update', async (event) => {
+    event.returnValue = await versionDiff()
+  })
+
+  ipcMain.on('update-version', async (event) => {
+    const updateResult = await autoUpdate(window)
+    event.sender.send('update-result', updateResult)
+    app.relaunch()
+    app.exit(0)
+  })
+
   ipcMain.on('relaunch', () => {
     app.relaunch()
     app.exit(0)
@@ -54,10 +58,8 @@ const menus = Menu.buildFromTemplate([
     submenu: [{
       label: 'About',
       click () {
-        shell.openExternal('https://github.com/jrainlau/kaleido')
+        shell.openExternal('https://github.com/jrainlau/kuuga')
       }
-    }, {
-      type: 'separator'
     }, {
       type: 'separator'
     }, {

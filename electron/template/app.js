@@ -11,7 +11,7 @@ const menus = Menu.buildFromTemplate([
     submenu: [{
       label: 'About',
       click () {
-        shell.openExternal('https://github.com/jrainlau/kaleido')
+        shell.openExternal('https://github.com/jrainlau/kuuga')
       }
     }, {
       type: 'separator'

@@ -4,7 +4,9 @@
       <el-progress :percentage="generateProgress" :show-text="false" :stroke-width="14"></el-progress>
       <span class="progress-text">{{generateStatus}}</span>
     </div>
-    <img src="./assets/imgs/kuuga-white.png" alt="" class="logo">
+    <el-badge class="logo" :value="!versionMatch && latestVersion">
+      <img src="./assets/imgs/kuuga-white.png" :class="{'enable': !versionMatch}" @click="updateVersion">
+    </el-badge>
     <el-form :model='form' label-width="50px">
       <el-form-item label="URL">
         <el-input v-model="form.url"></el-input>
@@ -29,6 +31,7 @@
         </div>
       </el-form-item>
     </el-form>
+    <span class="version">{{currentVersion}}</span>
   </div>
 </template>
 
@@ -45,7 +48,10 @@ export default {
         url: '',
         name: '',
         previewUrl: ''
-      }
+      },
+      versionMatch: true,
+      currentVersion: '',
+      latestVersion: ''
     }
   },
   computed: {
@@ -65,6 +71,11 @@ export default {
         }, 2000)
       }
     })
+
+    const res = ipcRenderer.sendSync('check-update')
+    this.versionMatch = res.match
+    this.currentVersion = 'v.' + res.currentVersion
+    this.latestVersion = 'v.' + res.latestVersion
   },
   methods: {
     onDrop (e) {
@@ -113,6 +124,11 @@ export default {
         })
       })
     },
+    updateVersion () {
+      if (!this.versionMatch) {
+        ipcRenderer.send('update-version')
+      }
+    },
     close () {
       ipcRenderer.send('close')
     },
@@ -158,6 +174,13 @@ export default {
     width: 55px;
     height: 55px;
     margin: 0 auto 15px auto;
+    img {
+      width: 100%;
+      height: 100%;
+      &.enable {
+        cursor: pointer;
+      }
+    }
   }
   .preview {
     width: 80px;
@@ -212,6 +235,13 @@ export default {
   .btnbox {
     display: flex;
     justify-content: flex-end;
+  }
+  .version {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 12px;
+    color: #909399;
   }
 }
 </style>
