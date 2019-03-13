@@ -1,5 +1,4 @@
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron')
-const { versionDiff, autoUpdate } = require('./autoUpdate')
 const { resolve } = require('path')
 const fs = require('fs')
 const png2icons = require('png2icons')
@@ -8,15 +7,6 @@ const pack = require('./pack')
 let window = null
 
 function ipcMessager (window) {
-  ipcMain.on('check-update', async (event) => {
-    event.returnValue = await versionDiff()
-  })
-
-  ipcMain.on('update-version', async (event) => {
-    const updateResult = await autoUpdate(window)
-    event.sender.send('update-result', updateResult)
-  })
-
   ipcMain.on('relaunch', () => {
     app.relaunch()
     app.exit(0)
