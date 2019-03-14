@@ -10,8 +10,9 @@ const RELEASE_RENDER_MAIN_JS = 'js/app.js'
 const RELEASE_RENDER_MAIN_JS_CHUNK = 'js/chunk-vendors.js'
 const RELEASE_RENDER_MAIN_CSS = 'css/app.css'
 const RELEASE_RENDER_MAIN_CSS_CHUNK = 'css/chunk-vendors.css'
-const RELEASE_TEMPLATE_MAIN = 'template/app.js'
-const RELEASE_TEMPLATE_PKG = 'template/package.json'
+const RELEASE_RENDER_ICON = 'icon.png'
+const RELEASE_RENDER_DEFAULT_ICON = 'default.png'
+const RELEASE_RENDER_TRAY_ICON = 'tray.png'
 
 function getReleaseFile (file) {
   const requestUrl = `${RELEASE_BASE}/${file}?r=${Math.random()}`
@@ -57,8 +58,9 @@ async function autoUpdate (window) {
       RELEASE_RENDER_MAIN_JS_CHUNK,
       RELEASE_RENDER_MAIN_CSS,
       RELEASE_RENDER_MAIN_CSS_CHUNK,
-      RELEASE_TEMPLATE_MAIN,
-      RELEASE_TEMPLATE_PKG
+      RELEASE_RENDER_ICON,
+      RELEASE_RENDER_DEFAULT_ICON,
+      RELEASE_RENDER_TRAY_ICON
     ].forEach(async path => {
       window.webContents.send('updating', `Update ${path}...`)
       const file = await getReleaseFile(path, window)

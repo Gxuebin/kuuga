@@ -13,9 +13,7 @@ module.exports = {
         }, {
           from: './package.json', to: './'
         }, {
-          from: './electron/*.js', to: '[name].[ext]'
-        }, {
-          from: './electron/template', to: './template/'
+          from: './electron/**', to: '[name].[ext]'
         }])
       ]
     }

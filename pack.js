@@ -23,8 +23,8 @@ const run = async () => {
   process.chdir(resolve(__dirname, './release'))
   await execCmd('npm install')
   const buildCommand = platform === 'win'
-    ? 'electron-packager . Kuuga --platform=win32 --icon=./favicon.ico --overwrite'
-    : 'electron-packager . Kuuga --platform=darwin --icon=./icon.icns --overwrite'
+    ? `electron-packager . Kuuga --platform=win32 --icon=./favicon.ico --overwrite`
+    : `electron-packager . Kuuga --platform=darwin --icon=./icon.icns --overwrite --darwinDarkModeSupport=true`
   await execCmd(buildCommand)
   console.log('💖 Packaging done!')
 }

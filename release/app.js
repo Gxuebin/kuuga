@@ -1,11 +1,80 @@
-const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, Tray, shell } = require('electron')
 const { resolve } = require('path')
-const fs = require('fs')
-const png2icons = require('png2icons')
-const pack = require('./pack')
 const { versionDiff, autoUpdate } = require('./autoUpdate')
+const Store = require('electron-store')
+const store = new Store()
+const { getTrayMenu, getMainMenu } = require('./menus')
+
+const iconPath = resolve(__dirname, './default.png')
+const trayIconPath = resolve(__dirname, './tray.png')
 
 let window = null
+let trayApp = null
+
+let trayMenu = null
+let mainMenu = null
+
+const winMap = {}
+
+function trayMenuItemHandler (name, op) {
+  let index
+
+  trayMenu.forEach((item, i) => {
+    if (item.label === name) {
+      index = i
+    }
+  })
+
+  if (op === 'unchecked') {
+    trayMenu[index].checked = false
+  } else if (op === 'checked') {
+    trayMenu[index].checked = true
+  } else if (op === 'delete') {
+    trayMenu.splice(index, 1)
+  } else if (op === 'add') {
+    trayMenu.splice(3, 0, {
+      label: name,
+      type: 'radio',
+      checked: true,
+      click: function () { winMap[name].focus() }
+    })
+  }
+  trayApp.setContextMenu(Menu.buildFromTemplate(trayMenu))
+}
+
+function createNewWin (appInfo) {
+  const { name, url, iconPath } = appInfo
+  if (winMap[name] && winMap[name].isActive) {
+    return
+  }
+  const preBounds = store.get(`${url}_bounds`)
+  winMap[name] = new BrowserWindow(preBounds || {
+    width: 1152,
+    height: 720,
+    title: 'Kuuga'
+  })
+  winMap[name].loadURL(url)
+  winMap[name].isActive = true
+
+  trayMenuItemHandler(name, 'add')
+
+  winMap[name].on('close', () => {
+    const bounds = winMap[name].getBounds()
+    store.set(`${url}_bounds`, bounds)
+    winMap[name].isActive = false
+    app.dock.setIcon(iconPath)
+    trayApp.setTitle('Kuuga')
+    trayMenuItemHandler(name, 'delete')
+  })
+  winMap[name].on('focus', () => {
+    app.dock.setIcon(iconPath || resolve(__dirname, './icon.png'))
+    trayApp.setTitle(name)
+    trayMenuItemHandler(name, 'checked')
+  })
+  winMap[name].on('blur', () => {
+    trayMenuItemHandler(name, 'unchecked')
+  })
+}
 
 function ipcMessager (window) {
   ipcMain.on('check-update', async (event) => {
@@ -28,100 +97,23 @@ function ipcMessager (window) {
     app.quit()
   })
 
-  ipcMain.on('uploadImg', (event, path) => {
-    const input = fs.readFileSync(path)
-    const icns = png2icons.PNG2ICNS(input, png2icons.BILINEAR, 0)
-    const ico = png2icons.createICO(input, png2icons.BEZIER, 20, true)
-    fs.writeFileSync(resolve(__dirname, './template/icon.icns'), icns)
-    fs.writeFileSync(resolve(__dirname, './template/icon.ico'), ico)
-  })
-
-  ipcMain.on('deleteImg', () => {
-    fs.unlinkSync(resolve(__dirname, './template/icon.icns'))
-    fs.unlinkSync(resolve(__dirname, './template/icon.ico'))
-  })
-
-  ipcMain.on('generateApp', (event, appInfo) => {
-    fs.writeFileSync(resolve(__dirname, './template/config.json'), JSON.stringify(appInfo, null, 2))
-    pack('mac', (msg) => {
-      event.sender.send('generate-result', msg)
-      if (/DONE/.test(msg)) {
-        fs.writeFileSync(resolve(__dirname, './template/config.json'), '')
-      }
-    })
+  ipcMain.on('createApp', (event, appInfo) => {
+    createNewWin(appInfo)
   })
 }
 
-const menus = Menu.buildFromTemplate([
-  {
-    label: 'Kuuga',
-    submenu: [{
-      label: 'About',
-      click () {
-        shell.openExternal('https://github.com/jrainlau/kuuga')
-      }
-    }, {
-      type: 'separator'
-    }, {
-      role: 'toggledevtools'
-    }, {
-      type: 'separator'
-    }, {
-      role: 'reload'
-    }, {
-      role: 'quit'
-    }]
-  }, {
-    label: 'Edit',
-    submenu: [
-      {
-        label: 'Undo',
-        accelerator: 'CmdOrCtrl+Z',
-        role: 'undo'
-      },
-      {
-        label: 'Redo',
-        accelerator: 'Shift+CmdOrCtrl+Z',
-        role: 'redo'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Cut',
-        accelerator: 'CmdOrCtrl+X',
-        role: 'cut'
-      },
-      {
-        label: 'Copy',
-        accelerator: 'CmdOrCtrl+C',
-        role: 'copy'
-      },
-      {
-        label: 'Paste',
-        accelerator: 'CmdOrCtrl+V',
-        role: 'paste'
-      },
-      {
-        label: 'Select All',
-        accelerator: 'CmdOrCtrl+A',
-        role: 'selectall'
-      }
-    ]
-  }
-])
-
 async function createWindow () {
-  Menu.setApplicationMenu(menus)
-
   window = new BrowserWindow({
-    width: 500,
-    height: 360,
-    transparent: true,
-    frame: false
+    width: 520,
+    height: 380,
+    resizable: false,
+    icon: iconPath,
+    show: false
   })
 
-  ipcMessager(window)
+  trayMenu = getTrayMenu({ window, shell, app })
+  mainMenu = getMainMenu({ shell })
+  Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {
     window.loadURL('http://localhost:8080/')
@@ -129,6 +121,31 @@ async function createWindow () {
   } else {
     window.loadFile(resolve(__dirname, './index.html'))
   }
+
+  ipcMessager(window)
+
+  trayApp = new Tray(trayIconPath)
+  trayApp.setContextMenu(Menu.buildFromTemplate(trayMenu))
+
+  window.once('ready-to-show', () => {
+    window.show()
+  })
+  window.on('focus', () => {
+    app.dock.setIcon(iconPath)
+    trayApp.setTitle('Kuuga')
+  })
+  window.on('minimize', function (event) {
+    event.preventDefault()
+    window.hide()
+  })
+
+  window.on('close', function (event) {
+    if (!app.isQuiting) {
+      event.preventDefault()
+      window.hide()
+    }
+    return false
+  })
 }
 
 app.on('ready', createWindow)
