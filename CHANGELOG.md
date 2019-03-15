@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/jrainlau/kuuga/compare/v0.2.2...v0.3.0) (2019-03-15)
+
+
+### Features
+
+* save icons to kuuga's tmp dir ([e4922db](https://github.com/jrainlau/kuuga/commit/e4922db))
+
+
+
 <a name="0.2.2"></a>
 ## [0.2.2](https://github.com/jrainlau/kuuga/compare/v0.2.1...v0.2.2) (2019-03-15)
 
