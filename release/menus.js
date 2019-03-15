@@ -1,6 +1,9 @@
 exports.getTrayMenu = ({ window, shell, app }) => {
   return [
     {
+      type: 'separator'
+    },
+    {
       label: 'Show Kuuga',
       click: function () {
         window.show()
@@ -16,9 +19,6 @@ exports.getTrayMenu = ({ window, shell, app }) => {
       type: 'separator'
     },
     {
-      type: 'separator'
-    },
-    {
       label: 'Quit',
       click: function () {
         app.isQuiting = true
@@ -28,7 +28,7 @@ exports.getTrayMenu = ({ window, shell, app }) => {
   ]
 }
 
-exports.getMainMenu = ({ shell }) => {
+exports.getMainMenu = ({ shell, currentVersion, checkUpdate }) => {
   return [
     {
       label: 'Kuuga',
@@ -41,6 +41,17 @@ exports.getMainMenu = ({ shell }) => {
         type: 'separator'
       }, {
         role: 'toggledevtools'
+      }, {
+        label: 'Version',
+        submenu: [
+          {
+            label: 'v.' + currentVersion
+          },
+          {
+            label: 'Check for updates',
+            click: checkUpdate
+          }
+        ]
       }, {
         type: 'separator'
       }, {

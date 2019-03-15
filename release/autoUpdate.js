@@ -14,6 +14,8 @@ const RELEASE_RENDER_ICON = 'icon.png'
 const RELEASE_RENDER_DEFAULT_ICON = 'default.png'
 const RELEASE_RENDER_TRAY_ICON = 'tray.png'
 
+const currentVersion = JSON.parse(fs.readFileSync(resolve(__dirname, './package.json'))).version
+
 function getReleaseFile (file) {
   const requestUrl = `${RELEASE_BASE}/${file}?r=${Math.random()}`
   return new Promise((resolve, reject) => {
@@ -43,7 +45,6 @@ function getReleaseFile (file) {
 
 async function versionDiff () {
   const latestVersion = JSON.parse(await getReleaseFile(RELEASE_INFO)).version
-  const currentVersion = JSON.parse(fs.readFileSync(resolve(__dirname, './package.json'))).version
   return { latestVersion, currentVersion, match: latestVersion === currentVersion }
 }
 
@@ -83,6 +84,7 @@ async function autoUpdate (window) {
 }
 
 module.exports = {
+  currentVersion,
   versionDiff,
   autoUpdate
 }

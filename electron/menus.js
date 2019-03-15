@@ -48,7 +48,7 @@ exports.getMainMenu = ({ shell, currentVersion, checkUpdate }) => {
             label: 'v.' + currentVersion
           },
           {
-            label: 'Check update',
+            label: 'Check for updates',
             click: checkUpdate
           }
         ]

@@ -1,11 +1,11 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog } = require('electron')
 const { resolve } = require('path')
-const { versionDiff, autoUpdate } = require('./autoUpdate')
+const { currentVersion, versionDiff, autoUpdate } = require('./autoUpdate')
 const Store = require('electron-store')
 const store = new Store()
 const { getTrayMenu, getMainMenu } = require('./menus')
 
-const iconPath = resolve(__dirname, './default.png')
+const defaultIconPath = resolve(__dirname, './default.png')
 const trayIconPath = resolve(__dirname, './tray.png')
 
 let window = null
@@ -32,11 +32,14 @@ function trayMenuItemHandler (name, op) {
   } else if (op === 'delete') {
     trayMenu.splice(index, 1)
   } else if (op === 'add') {
-    trayMenu.splice(3, 0, {
+    trayMenu.splice(0, 0, {
       label: name,
-      type: 'radio',
+      type: 'checkbox',
       checked: true,
-      click: function () { winMap[name].focus() }
+      click: function () {
+        winMap[name].show()
+        winMap[name].focus()
+      }
     })
   }
   trayApp.setContextMenu(Menu.buildFromTemplate(trayMenu))
@@ -44,27 +47,30 @@ function trayMenuItemHandler (name, op) {
 
 function createNewWin (appInfo) {
   const { name, url, iconPath } = appInfo
-  if (winMap[name] && winMap[name].isActive) {
+  if (winMap[name]) {
+    winMap[name].show()
     return
   }
   const preBounds = store.get(`${url}_bounds`)
-  winMap[name] = new BrowserWindow(preBounds || {
-    width: 1152,
-    height: 720,
-    title: 'Kuuga'
-  })
+  if (!winMap[name]) {
+    winMap[name] = new BrowserWindow(preBounds || {
+      width: 1152,
+      height: 720,
+      title: 'Kuuga'
+    })
+  }
   winMap[name].loadURL(url)
-  winMap[name].isActive = true
 
   trayMenuItemHandler(name, 'add')
 
-  winMap[name].on('close', () => {
+  winMap[name].on('close', (e) => {
+    e.preventDefault()
     const bounds = winMap[name].getBounds()
     store.set(`${url}_bounds`, bounds)
-    winMap[name].isActive = false
-    app.dock.setIcon(iconPath)
+    winMap[name].hide()
+    app.dock.setIcon(defaultIconPath)
     trayApp.setTitle('Kuuga')
-    trayMenuItemHandler(name, 'delete')
+    trayMenuItemHandler(name, 'unchecked')
   })
   winMap[name].on('focus', () => {
     app.dock.setIcon(iconPath || resolve(__dirname, './icon.png'))
@@ -76,29 +82,52 @@ function createNewWin (appInfo) {
   })
 }
 
+async function checkUpdate () {
+  let latestVersion = '1.0.0'
+  let match = false
+  if (process.env.NODE_ENV !== 'DEV') {
+    const versionDiffResult = await versionDiff()
+    latestVersion = versionDiffResult.latestVersion
+    match = versionDiffResult.match
+  }
+  if (match) {
+    dialog.showMessageBox(null, {
+      icon: defaultIconPath,
+      type: 'info',
+      message: `No new version availabled.`,
+      detail: `Kuuga is in the latest version`,
+      buttons: ['OK']
+    })
+  } else {
+    dialog.showMessageBox(null, {
+      icon: defaultIconPath,
+      type: 'question',
+      message: `A new version of v.${latestVersion} is availabled.`,
+      detail: `Update Kuuga right now?`,
+      buttons: ['No', 'Yes'],
+      defaultId: 1
+    }, async (yes) => {
+      if (yes) {
+        await autoUpdate(window)
+        app.relaunch()
+        app.exit(0)
+      }
+    })
+  }
+}
+
 function ipcMessager (window) {
-  ipcMain.on('check-update', async (event) => {
-    event.returnValue = await versionDiff()
-  })
-
-  ipcMain.on('update-version', async (event) => {
-    const updateResult = await autoUpdate(window)
-    event.sender.send('update-result', updateResult)
-    app.relaunch()
-    app.exit(0)
-  })
-
-  ipcMain.on('relaunch', () => {
-    app.relaunch()
-    app.exit(0)
-  })
-
-  ipcMain.on('close', () => {
-    app.quit()
+  ipcMain.on('get-version', (event) => {
+    event.sender.send('get-version-result', currentVersion)
   })
 
   ipcMain.on('createApp', (event, appInfo) => {
     createNewWin(appInfo)
+  })
+
+  ipcMain.on('deleteApp', (event, name) => {
+    winMap[name].destroy()
+    trayMenuItemHandler(name, 'delete')
   })
 }
 
@@ -107,12 +136,12 @@ async function createWindow () {
     width: 520,
     height: 380,
     resizable: false,
-    icon: iconPath,
+    icon: defaultIconPath,
     show: false
   })
 
   trayMenu = getTrayMenu({ window, shell, app })
-  mainMenu = getMainMenu({ shell })
+  mainMenu = getMainMenu({ shell, currentVersion, checkUpdate })
   Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {
@@ -131,7 +160,7 @@ async function createWindow () {
     window.show()
   })
   window.on('focus', () => {
-    app.dock.setIcon(iconPath)
+    app.dock.setIcon(defaultIconPath)
     trayApp.setTitle('Kuuga')
   })
   window.on('minimize', function (event) {
