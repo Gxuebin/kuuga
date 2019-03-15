@@ -1,12 +1,19 @@
 const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog } = require('electron')
 const { resolve } = require('path')
-const { currentVersion, versionDiff, autoUpdate } = require('./autoUpdate')
 const Store = require('electron-store')
-const store = new Store()
+const fs = require('fs')
 const { getTrayMenu, getMainMenu } = require('./menus')
+const { currentVersion, versionDiff, autoUpdate } = require('./autoUpdate')
 
-const defaultIconPath = resolve(__dirname, './default.png')
-const trayIconPath = resolve(__dirname, './tray.png')
+const store = new Store()
+
+const USER_ICON_DIR = resolve(__dirname, './user_icons')
+const APP_ICON_DIR = resolve(__dirname, './app_icons')
+const DEFAULT_ICON = `${APP_ICON_DIR}/default.png`
+const WHITE_ICON = `${APP_ICON_DIR}/icon.png`
+const TRAY_ICON = `${APP_ICON_DIR}/tray.png`
+
+const WIN_MAP = {}
 
 let window = null
 let trayApp = null
@@ -14,7 +21,20 @@ let trayApp = null
 let trayMenu = null
 let mainMenu = null
 
-const winMap = {}
+function clearUserIconsDir () {
+  let files = []
+  if (fs.existsSync(USER_ICON_DIR)) {
+    files = fs.readdirSync(USER_ICON_DIR)
+    files.forEach((file, index) => {
+      let curPath = USER_ICON_DIR + '/' + file
+      if (fs.statSync(curPath).isDirectory()) {
+        clearUserIconsDir(curPath)
+      } else {
+        fs.unlinkSync(curPath)
+      }
+    })
+  }
+}
 
 function trayMenuItemHandler (name, op) {
   let index
@@ -37,8 +57,8 @@ function trayMenuItemHandler (name, op) {
       type: 'checkbox',
       checked: true,
       click: function () {
-        winMap[name].show()
-        winMap[name].focus()
+        WIN_MAP[name].show()
+        WIN_MAP[name].focus()
       }
     })
   }
@@ -47,37 +67,44 @@ function trayMenuItemHandler (name, op) {
 
 function createNewWin (appInfo) {
   const { name, url, iconPath } = appInfo
-  if (winMap[name]) {
-    winMap[name].show()
+
+  if (WIN_MAP[name]) {
+    WIN_MAP[name].show()
     return
   }
   const preBounds = store.get(`${url}_bounds`)
-  if (!winMap[name]) {
-    winMap[name] = new BrowserWindow(preBounds || {
+  if (!WIN_MAP[name]) {
+    WIN_MAP[name] = new BrowserWindow(preBounds || {
       width: 1152,
       height: 720,
       title: 'Kuuga'
     })
+
+    if (iconPath) {
+      const localIconPath = `${USER_ICON_DIR}/${Math.random().toString(36).substr(2)}.png`
+      fs.copyFileSync(iconPath, localIconPath)
+      WIN_MAP[name].icon = localIconPath
+    }
   }
-  winMap[name].loadURL(url)
+  WIN_MAP[name].loadURL(url)
 
   trayMenuItemHandler(name, 'add')
 
-  winMap[name].on('close', (e) => {
+  WIN_MAP[name].on('close', (e) => {
     e.preventDefault()
-    const bounds = winMap[name].getBounds()
+    const bounds = WIN_MAP[name].getBounds()
     store.set(`${url}_bounds`, bounds)
-    winMap[name].hide()
-    app.dock.setIcon(defaultIconPath)
+    WIN_MAP[name].hide()
+    app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
     trayMenuItemHandler(name, 'unchecked')
   })
-  winMap[name].on('focus', () => {
-    app.dock.setIcon(iconPath || resolve(__dirname, './icon.png'))
+  WIN_MAP[name].on('focus', () => {
+    app.dock.setIcon(WIN_MAP[name].icon || WHITE_ICON)
     trayApp.setTitle(name)
     trayMenuItemHandler(name, 'checked')
   })
-  winMap[name].on('blur', () => {
+  WIN_MAP[name].on('blur', () => {
     trayMenuItemHandler(name, 'unchecked')
   })
 }
@@ -92,7 +119,7 @@ async function checkUpdate () {
   }
   if (match) {
     dialog.showMessageBox(null, {
-      icon: defaultIconPath,
+      icon: DEFAULT_ICON,
       type: 'info',
       message: `No new version availabled.`,
       detail: `Kuuga is in the latest version`,
@@ -100,7 +127,7 @@ async function checkUpdate () {
     })
   } else {
     dialog.showMessageBox(null, {
-      icon: defaultIconPath,
+      icon: DEFAULT_ICON,
       type: 'question',
       message: `A new version of v.${latestVersion} is availabled.`,
       detail: `Update Kuuga right now?`,
@@ -126,8 +153,8 @@ function ipcMessager (window) {
   })
 
   ipcMain.on('deleteApp', (event, name) => {
-    if (winMap[name]) {
-      winMap[name].destroy()
+    if (WIN_MAP[name]) {
+      WIN_MAP[name].destroy()
       trayMenuItemHandler(name, 'delete')
     }
   })
@@ -138,12 +165,12 @@ async function createWindow () {
     width: 520,
     height: 380,
     resizable: false,
-    icon: defaultIconPath,
+    icon: DEFAULT_ICON,
     show: false
   })
 
-  trayMenu = getTrayMenu({ window, shell, app })
-  mainMenu = getMainMenu({ app, shell, currentVersion, checkUpdate })
+  trayMenu = getTrayMenu({ window, shell, app, clearUserIconsDir })
+  mainMenu = getMainMenu({ app, shell, currentVersion, checkUpdate, clearUserIconsDir })
   Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {
@@ -155,14 +182,14 @@ async function createWindow () {
 
   ipcMessager(window)
 
-  trayApp = new Tray(trayIconPath)
+  trayApp = new Tray(TRAY_ICON)
   trayApp.setContextMenu(Menu.buildFromTemplate(trayMenu))
 
   window.once('ready-to-show', () => {
     window.show()
   })
   window.on('focus', () => {
-    app.dock.setIcon(defaultIconPath)
+    app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
   })
   window.on('minimize', function (event) {
@@ -180,6 +207,3 @@ async function createWindow () {
 }
 
 app.on('ready', createWindow)
-app.on('window-all-closed', () => {
-  app.quit()
-})
