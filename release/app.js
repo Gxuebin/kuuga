@@ -34,6 +34,7 @@ function clearUserIconsDir () {
       }
     })
   }
+  fs.writeFileSync(`${USER_ICON_DIR}/icons.txt`, '')
 }
 
 function trayMenuItemHandler (name, op) {

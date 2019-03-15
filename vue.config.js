@@ -13,7 +13,11 @@ module.exports = {
         }, {
           from: './package.json', to: './'
         }, {
-          from: './electron/**', to: '[name].[ext]'
+          from: './electron/*.js', to: '[name].[ext]'
+        }, {
+          from: './electron/app_icons', to: './app_icons'
+        }, {
+          from: './electron/user_icons', to: './user_icons'
         }])
       ]
     }
