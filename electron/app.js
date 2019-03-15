@@ -21,22 +21,6 @@ let trayApp = null
 let trayMenu = null
 let mainMenu = null
 
-function clearUserIconsDir () {
-  let files = []
-  if (fs.existsSync(USER_ICON_DIR)) {
-    files = fs.readdirSync(USER_ICON_DIR)
-    files.forEach((file, index) => {
-      let curPath = USER_ICON_DIR + '/' + file
-      if (fs.statSync(curPath).isDirectory()) {
-        clearUserIconsDir(curPath)
-      } else {
-        fs.unlinkSync(curPath)
-      }
-    })
-  }
-  fs.writeFileSync(`${USER_ICON_DIR}/icons.txt`, '')
-}
-
 function trayMenuItemHandler (name, op) {
   let index
 
@@ -82,9 +66,13 @@ function createNewWin (appInfo) {
     })
 
     if (iconPath) {
-      const localIconPath = `${USER_ICON_DIR}/${Math.random().toString(36).substr(2)}.png`
-      fs.copyFileSync(iconPath, localIconPath)
-      WIN_MAP[name].icon = localIconPath
+      const localIconPath = `${USER_ICON_DIR}/${iconPath.split('/').pop()}`
+      fs.stat(iconPath, (err, stats) => {
+        if (!err) {
+          fs.copyFileSync(iconPath, localIconPath)
+          WIN_MAP[name].icon = localIconPath
+        }
+      })
     }
   }
   WIN_MAP[name].loadURL(url)
@@ -170,8 +158,8 @@ async function createWindow () {
     show: false
   })
 
-  trayMenu = getTrayMenu({ window, shell, app, clearUserIconsDir })
-  mainMenu = getMainMenu({ app, shell, currentVersion, checkUpdate, clearUserIconsDir })
+  trayMenu = getTrayMenu({ window, shell, app })
+  mainMenu = getMainMenu({ app, shell, currentVersion, checkUpdate })
   Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {

@@ -1,4 +1,4 @@
-exports.getTrayMenu = ({ app, window, shell, clearUserIconsDir }) => {
+exports.getTrayMenu = ({ app, window, shell }) => {
   return [
     {
       type: 'separator'
@@ -21,7 +21,6 @@ exports.getTrayMenu = ({ app, window, shell, clearUserIconsDir }) => {
     {
       label: 'Quit',
       click: function () {
-        clearUserIconsDir()
         app.isQuiting = true
         app.exit()
       }
@@ -29,7 +28,7 @@ exports.getTrayMenu = ({ app, window, shell, clearUserIconsDir }) => {
   ]
 }
 
-exports.getMainMenu = ({ app, shell, currentVersion, checkUpdate, clearUserIconsDir }) => {
+exports.getMainMenu = ({ app, shell, currentVersion, checkUpdate }) => {
   return [
     {
       label: 'Kuuga',
@@ -60,7 +59,6 @@ exports.getMainMenu = ({ app, shell, currentVersion, checkUpdate, clearUserIcons
       }, {
         label: 'Quit',
         click: function () {
-          clearUserIconsDir()
           app.isQuiting = true
           app.exit()
         }
