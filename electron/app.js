@@ -141,7 +141,7 @@ async function createWindow () {
   })
 
   trayMenu = getTrayMenu({ window, shell, app })
-  mainMenu = getMainMenu({ shell, currentVersion, checkUpdate })
+  mainMenu = getMainMenu({ app, shell, currentVersion, checkUpdate })
   Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {

@@ -1,4 +1,4 @@
-exports.getTrayMenu = ({ window, shell, app }) => {
+exports.getTrayMenu = ({ app, window, shell }) => {
   return [
     {
       type: 'separator'
@@ -22,13 +22,13 @@ exports.getTrayMenu = ({ window, shell, app }) => {
       label: 'Quit',
       click: function () {
         app.isQuiting = true
-        app.quit()
+        app.exit()
       }
     }
   ]
 }
 
-exports.getMainMenu = ({ shell, currentVersion, checkUpdate }) => {
+exports.getMainMenu = ({ app, shell, currentVersion, checkUpdate }) => {
   return [
     {
       label: 'Kuuga',
@@ -57,7 +57,8 @@ exports.getMainMenu = ({ shell, currentVersion, checkUpdate }) => {
       }, {
         role: 'reload'
       }, {
-        role: 'quit'
+        label: 'Quit',
+        click () { app.exit() }
       }]
     }, {
       label: 'Edit',
