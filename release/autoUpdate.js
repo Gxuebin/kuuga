@@ -10,9 +10,10 @@ const RELEASE_RENDER_MAIN_JS = 'js/app.js'
 const RELEASE_RENDER_MAIN_JS_CHUNK = 'js/chunk-vendors.js'
 const RELEASE_RENDER_MAIN_CSS = 'css/app.css'
 const RELEASE_RENDER_MAIN_CSS_CHUNK = 'css/chunk-vendors.css'
-const RELEASE_RENDER_ICON = 'icon.png'
-const RELEASE_RENDER_DEFAULT_ICON = 'default.png'
-const RELEASE_RENDER_TRAY_ICON = 'tray.png'
+const RELEASE_RENDER_ICON = 'app_icons/icon.png'
+const RELEASE_RENDER_DEFAULT_ICON = 'app_icons/default.png'
+const RELEASE_RENDER_TRAY_ICON = 'app_icons/tray.png'
+const RELEASE_MENU = 'menus.js'
 
 const currentVersion = JSON.parse(fs.readFileSync(resolve(__dirname, './package.json'))).version
 
@@ -61,7 +62,8 @@ async function autoUpdate (window) {
       RELEASE_RENDER_MAIN_CSS_CHUNK,
       RELEASE_RENDER_ICON,
       RELEASE_RENDER_DEFAULT_ICON,
-      RELEASE_RENDER_TRAY_ICON
+      RELEASE_RENDER_TRAY_ICON,
+      RELEASE_MENU
     ].forEach(async path => {
       window.webContents.send('updating', `Update ${path}...`)
       const file = await getReleaseFile(path, window)
