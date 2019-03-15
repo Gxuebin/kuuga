@@ -28,7 +28,7 @@ exports.getTrayMenu = ({ window, shell, app }) => {
   ]
 }
 
-exports.getMainMenu = ({ shell }) => {
+exports.getMainMenu = ({ shell, currentVersion, checkUpdate }) => {
   return [
     {
       label: 'Kuuga',
@@ -41,6 +41,17 @@ exports.getMainMenu = ({ shell }) => {
         type: 'separator'
       }, {
         role: 'toggledevtools'
+      }, {
+        label: 'Version',
+        submenu: [
+          {
+            label: 'v.' + currentVersion
+          },
+          {
+            label: 'Check update',
+            click: checkUpdate
+          }
+        ]
       }, {
         type: 'separator'
       }, {

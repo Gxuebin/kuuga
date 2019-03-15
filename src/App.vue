@@ -21,9 +21,7 @@
       </div>
     </div>
     <div class="content">
-      <el-badge class="logo" :value="!versionMatch && latestVersion">
-        <img src="./assets/imgs/kuuga-white.png" :class="{'enable': !versionMatch}" @click="updateVersion">
-      </el-badge>
+      <img src="./assets/imgs/kuuga-white.png" class="logo">
       <el-form :model='form' label-width="55px" label-position="left">
         <el-form-item label="URL" :required="true">
           <el-input v-model="form.url"></el-input>
@@ -66,9 +64,7 @@ export default {
         previewUrl: '',
         iconPath: ''
       },
-      versionMatch: true,
       currentVersion: '',
-      latestVersion: '',
       activeIndex: '',
       appList: []
     }
@@ -82,10 +78,10 @@ export default {
     const storeList = localStorage.getItem('appList') || '[]'
     this.appList = JSON.parse(storeList)
 
-    // const res = ipcRenderer.sendSync('check-update')
-    // this.versionMatch = res.match
-    // this.currentVersion = 'v.' + res.currentVersion
-    // this.latestVersion = 'v.' + res.latestVersion
+    ipcRenderer.send('get-version')
+    ipcRenderer.on('get-version-result', (event, version) => {
+      this.currentVersion = 'v.' + version
+    })
   },
   methods: {
     onDrop (e) {
@@ -128,11 +124,6 @@ export default {
       localStorage.setItem('appList', JSON.stringify(this.appList))
       this.reset()
     },
-    updateVersion () {
-      if (!this.versionMatch) {
-        ipcRenderer.send('update-version')
-      }
-    },
     activeApp (index, active = true) {
       this.activeIndex = index
       if (index !== '') {
@@ -153,9 +144,6 @@ export default {
     updateApp () {
       this.appList[this.activeIndex] = this.form
       localStorage.setItem('appList', JSON.stringify(this.appList))
-    },
-    close () {
-      ipcRenderer.send('close')
     },
     reset () {
       this.form = {

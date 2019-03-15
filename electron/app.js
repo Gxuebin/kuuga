@@ -1,6 +1,6 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog } = require('electron')
 const { resolve } = require('path')
-const { versionDiff, autoUpdate } = require('./autoUpdate')
+const { currentVersion, versionDiff, autoUpdate } = require('./autoUpdate')
 const Store = require('electron-store')
 const store = new Store()
 const { getTrayMenu, getMainMenu } = require('./menus')
@@ -82,25 +82,43 @@ function createNewWin (appInfo) {
   })
 }
 
+async function checkUpdate () {
+  let latestVersion = '1.0.0'
+  let match = false
+  if (process.env.NODE_ENV !== 'DEV') {
+    const versionDiffResult = await versionDiff()
+    latestVersion = versionDiffResult.latestVersion
+    match = versionDiffResult.match
+  }
+  if (match) {
+    dialog.showMessageBox(null, {
+      icon: defaultIconPath,
+      type: 'info',
+      message: `No new version availabled.`,
+      detail: `Kuuga is in the latest version`,
+      buttons: ['OK']
+    })
+  } else {
+    dialog.showMessageBox(null, {
+      icon: defaultIconPath,
+      type: 'question',
+      message: `A new version of v.${latestVersion} is availabled.`,
+      detail: `Update Kuuga right now?`,
+      buttons: ['No', 'Yes'],
+      defaultId: 1
+    }, async (yes) => {
+      if (yes) {
+        await autoUpdate(window)
+        app.relaunch()
+        app.exit(0)
+      }
+    })
+  }
+}
+
 function ipcMessager (window) {
-  ipcMain.on('check-update', async (event) => {
-    event.returnValue = await versionDiff()
-  })
-
-  ipcMain.on('update-version', async (event) => {
-    const updateResult = await autoUpdate(window)
-    event.sender.send('update-result', updateResult)
-    app.relaunch()
-    app.exit(0)
-  })
-
-  ipcMain.on('relaunch', () => {
-    app.relaunch()
-    app.exit(0)
-  })
-
-  ipcMain.on('close', () => {
-    app.quit()
+  ipcMain.on('get-version', (event) => {
+    event.sender.send('get-version-result', currentVersion)
   })
 
   ipcMain.on('createApp', (event, appInfo) => {
@@ -123,7 +141,7 @@ async function createWindow () {
   })
 
   trayMenu = getTrayMenu({ window, shell, app })
-  mainMenu = getMainMenu({ shell })
+  mainMenu = getMainMenu({ shell, currentVersion, checkUpdate })
   Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenu))
 
   if (process.env.NODE_ENV === 'DEV') {
