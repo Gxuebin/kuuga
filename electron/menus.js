@@ -1,6 +1,9 @@
 exports.getTrayMenu = ({ window, shell, app }) => {
   return [
     {
+      type: 'separator'
+    },
+    {
       label: 'Show Kuuga',
       click: function () {
         window.show()
@@ -11,9 +14,6 @@ exports.getTrayMenu = ({ window, shell, app }) => {
       click () {
         shell.openExternal('https://github.com/jrainlau/kuuga')
       }
-    },
-    {
-      type: 'separator'
     },
     {
       type: 'separator'

@@ -145,6 +145,7 @@ export default {
       }
     },
     deleteApp () {
+      ipcRenderer.send('deleteApp', this.appList[this.activeIndex].name)
       this.appList.splice(this.activeIndex, 1)
       localStorage.setItem('appList', JSON.stringify(this.appList))
       this.reset()
