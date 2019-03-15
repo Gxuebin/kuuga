@@ -126,8 +126,10 @@ function ipcMessager (window) {
   })
 
   ipcMain.on('deleteApp', (event, name) => {
-    winMap[name].destroy()
-    trayMenuItemHandler(name, 'delete')
+    if (winMap[name]) {
+      winMap[name].destroy()
+      trayMenuItemHandler(name, 'delete')
+    }
   })
 }
 
