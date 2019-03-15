@@ -1,5 +1,10 @@
 ![](./preview/kuuga-white.png)
 
+
+[Download (MacOS)](https://github.com/jrainlau/kuuga/releases/download/0.3.2/Kuuga-darwin-x64.zip)
+
+~~[TODO]Download (Windows)~~
+
 # Kuuga
 
 `Kuuga` is a tool for converting any *Web Apps* to *Desktop Apps*.
