@@ -1,3 +1,5 @@
+![](./preview/kuuga-white.png)
+
 # Kuuga
 
 `Kuuga` is a tool for converting any *Web Apps* to *Desktop Apps*.
