@@ -66,6 +66,7 @@ function createNewWin (appInfo) {
     })
 
     if (iconPath) {
+      WIN_MAP[name].icon = iconPath
       const localIconPath = `${USER_ICON_DIR}/${iconPath.split('/').pop()}`
       fs.stat(iconPath, (err, stats) => {
         if (!err) {
