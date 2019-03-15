@@ -19,7 +19,7 @@ Once opening `Kuuga.app`, you will see a very concise interface, which contains 
 
 ![](./preview/1.png)
 
-All you need to do is paste a web site url and type the name of it, besides you could drop a PNG as the app's icon. Then click "Create".
+All you need to do is to paste a web site url and type the name of it, besides you could drop a PNG as the app's icon. Then click "Create".
 
 ![](./preview/4.png)
 
@@ -62,7 +62,7 @@ Before releasing, you should run `build` command in first:
 npm run build
 ```
 
-An folder names `/release` with all the app's code, has been output to the root directory.
+A folder names `/release` with all the app's code, has been output to the root directory.
 
 Then check whether the app is running good or not:
 ```
