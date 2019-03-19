@@ -82,6 +82,10 @@ export default {
     ipcRenderer.on('get-version-result', (event, version) => {
       this.currentVersion = 'v.' + version
     })
+
+    ipcRenderer.on('set-icon-result', (event, path) => {
+      this.form.iconPath = path
+    })
   },
   methods: {
     onDrop (e) {
@@ -112,14 +116,14 @@ export default {
       }
     },
     setAppIcon (path) {
-      this.form.iconPath = path
+      ipcRenderer.send('set-icon', path)
     },
     deleteAppIcon () {
       this.form.previewUrl = ''
       this.form.iconPath = ''
     },
     createApp () {
-      ipcRenderer.send('createApp', this.form)
+      ipcRenderer.send('create-app', this.form)
       this.appList.push(this.form)
       localStorage.setItem('appList', JSON.stringify(this.appList))
       this.reset()
@@ -132,11 +136,11 @@ export default {
         this.reset()
       }
       if (active) {
-        ipcRenderer.send('createApp', this.form)
+        ipcRenderer.send('create-app', this.form)
       }
     },
     deleteApp () {
-      ipcRenderer.send('deleteApp', this.appList[this.activeIndex].name)
+      ipcRenderer.send('delete-app', this.appList[this.activeIndex].name)
       this.appList.splice(this.activeIndex, 1)
       localStorage.setItem('appList', JSON.stringify(this.appList))
       this.reset()

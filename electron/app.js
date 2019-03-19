@@ -85,13 +85,6 @@ function createNewWin (appInfo) {
 
     if (iconPath) {
       WIN_MAP[name].icon = iconPath
-      const localIconPath = `${USER_ICON_DIR}/${iconPath.split('/').pop()}`
-      fs.stat(iconPath, (err, stats) => {
-        if (!err) {
-          fs.copyFileSync(iconPath, localIconPath)
-          WIN_MAP[name].icon = localIconPath
-        }
-      })
     }
   }
   WIN_MAP[name].loadURL(url)
@@ -158,15 +151,27 @@ function ipcMessager (window) {
     event.sender.send('get-version-result', currentVersion)
   })
 
-  ipcMain.on('createApp', (event, appInfo) => {
+  ipcMain.on('create-app', (event, appInfo) => {
     createNewWin(appInfo)
   })
 
-  ipcMain.on('deleteApp', (event, name) => {
+  ipcMain.on('delete-app', (event, name) => {
     if (WIN_MAP[name]) {
       WIN_MAP[name].destroy()
       trayMenuItemHandler(name, 'delete')
     }
+  })
+
+  ipcMain.on('set-icon', (event, path) => {
+    const localIconPath = `${USER_ICON_DIR}/${path.split('/').pop()}`
+    fs.stat(path, (err, stats) => {
+      if (!err) {
+        try {
+          fs.copyFileSync(path, localIconPath)
+          event.sender.send('set-icon-result', localIconPath)
+        } catch {}
+      }
+    })
   })
 }
 
