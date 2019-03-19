@@ -14,12 +14,26 @@ const WHITE_ICON = `${APP_ICON_DIR}/icon.png`
 const TRAY_ICON = `${APP_ICON_DIR}/tray.png`
 
 const WIN_MAP = {}
+const ONOPEN_WINS = new Set()
 
 let window = null
 let trayApp = null
 
 let trayMenu = null
 let mainMenu = null
+
+function dockIconHandler (op, name) {
+  if (op === '+') {
+    ONOPEN_WINS.add(name)
+  } else {
+    ONOPEN_WINS.delete(name)
+  }
+  if (ONOPEN_WINS.size) {
+    app.dock.show()
+  } else {
+    app.dock.hide()
+  }
+}
 
 function trayMenuItemHandler (name, op) {
   let index
@@ -44,6 +58,7 @@ function trayMenuItemHandler (name, op) {
       click: function () {
         WIN_MAP[name].show()
         WIN_MAP[name].focus()
+        dockIconHandler('+', name)
       }
     })
   }
@@ -55,6 +70,7 @@ function createNewWin (appInfo) {
 
   if (WIN_MAP[name]) {
     WIN_MAP[name].show()
+    dockIconHandler('+', name)
     return
   }
   const preBounds = store.get(`${url}_bounds`)
@@ -64,6 +80,8 @@ function createNewWin (appInfo) {
       height: 720,
       title: 'Kuuga'
     })
+
+    dockIconHandler('+', name)
 
     if (iconPath) {
       WIN_MAP[name].icon = iconPath
@@ -88,6 +106,8 @@ function createNewWin (appInfo) {
     app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
     trayMenuItemHandler(name, 'unchecked')
+
+    dockIconHandler('-', name)
   })
   WIN_MAP[name].on('focus', () => {
     app.dock.setIcon(WIN_MAP[name].icon || WHITE_ICON)
@@ -182,15 +202,20 @@ async function createWindow () {
     app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
   })
-  window.on('minimize', function (event) {
+  window.on('minimize', (event) => {
     event.preventDefault()
     window.hide()
   })
 
-  window.on('close', function (event) {
+  window.on('show', () => {
+    dockIconHandler('+', 'main')
+  })
+
+  window.on('close', (event) => {
     if (!app.isQuiting) {
       event.preventDefault()
       window.hide()
+      dockIconHandler('-', 'main')
     }
     return false
   })
