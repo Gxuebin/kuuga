@@ -175,7 +175,6 @@ export default {
     height: 100%;
     box-sizing: border-box;
     overflow-x: hidden;
-    overflow-y: scroll;
     border-right: 2px solid #718792;
     background: #1c313a;
     padding-bottom: 15px;

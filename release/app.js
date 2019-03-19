@@ -4,6 +4,7 @@ const Store = require('electron-store')
 const fs = require('fs')
 const { getTrayMenu, getMainMenu } = require('./menus')
 const { currentVersion, versionDiff, autoUpdate } = require('./autoUpdate')
+const { platform } = require('process')
 
 const store = new Store()
 
@@ -22,6 +23,10 @@ let trayApp = null
 let trayMenu = null
 let mainMenu = null
 
+function isMac () {
+  return platform === 'darwin'
+}
+
 function dockIconHandler (op, name) {
   if (op === '+') {
     ONOPEN_WINS.add(name)
@@ -29,9 +34,9 @@ function dockIconHandler (op, name) {
     ONOPEN_WINS.delete(name)
   }
   if (ONOPEN_WINS.size) {
-    app.dock.show()
+    app.dock && app.dock.show()
   } else {
-    app.dock.hide()
+    app.dock && app.dock.hide()
   }
 }
 
@@ -96,14 +101,14 @@ function createNewWin (appInfo) {
     const bounds = WIN_MAP[name].getBounds()
     store.set(`${url}_bounds`, bounds)
     WIN_MAP[name].hide()
-    app.dock.setIcon(DEFAULT_ICON)
+    app.dock && app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
     trayMenuItemHandler(name, 'unchecked')
 
     dockIconHandler('-', name)
   })
   WIN_MAP[name].on('focus', () => {
-    app.dock.setIcon(WIN_MAP[name].icon || WHITE_ICON)
+    app.dock && app.dock.setIcon(WIN_MAP[name].icon || WHITE_ICON)
     trayApp.setTitle(name)
     trayMenuItemHandler(name, 'checked')
   })
@@ -177,8 +182,8 @@ function ipcMessager (window) {
 
 async function createWindow () {
   window = new BrowserWindow({
-    width: 520,
-    height: 380,
+    width: isMac() ? 520 : 530,
+    height: isMac() ? 380 : 400,
     resizable: false,
     icon: DEFAULT_ICON,
     show: false
@@ -204,7 +209,7 @@ async function createWindow () {
     window.show()
   })
   window.on('focus', () => {
-    app.dock.setIcon(DEFAULT_ICON)
+    app.dock && app.dock.setIcon(DEFAULT_ICON)
     trayApp.setTitle('Kuuga')
   })
   window.on('minimize', (event) => {
