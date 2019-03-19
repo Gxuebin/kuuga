@@ -1,9 +1,9 @@
 ![](./preview/kuuga-white.png)
 
 
-[Download (MacOS)](https://github.com/jrainlau/kuuga/releases/download/0.3.2/Kuuga-darwin-x64.zip)
+[Download (MacOS)](https://github.com/jrainlau/kuuga/releases/download/0.4.2/Kuuga-darwin-x64.zip)
 
-~~[TODO]Download (Windows)~~
+[Download (Windows)](https://github.com/jrainlau/kuuga/releases/download/0.4.2/Kuuga-win32-x64.zip)
 
 # Kuuga
 
